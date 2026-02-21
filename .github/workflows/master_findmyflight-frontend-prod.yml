@@ -29,7 +29,7 @@ jobs:
       - name: Build Next.js app
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://findmyflight-backend-prod-hyatccg4gufhcaet.canadacentral-01.azurewebsites.net
+          NEXT_PUBLIC_API_URL: https://findmyflight-backend-prod-hyatccg4gufhcaet.uksouth-01.azurewebsites.net
 
       - name: Remove dev dependencies for production
         run: npm prune --omit=dev
