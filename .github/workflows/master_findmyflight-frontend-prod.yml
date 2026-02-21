@@ -31,18 +31,11 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://findmyflight-backend-prod-hyatccg4gufhcaet.canadacentral-01.azurewebsites.net
 
-      - name: Create deployment package
-        run: |
-          mkdir deploy
-          cp -r .next deploy/
-          cp -r public deploy/
-          cp package.json deploy/
-          cp package-lock.json deploy/ 2>/dev/null || true
-          cp next.config.js deploy/
-          cd deploy && npm install --omit=dev
+      - name: Remove dev dependencies for production
+        run: npm prune --omit=dev
 
-      - name: Zip deployment package
-        run: cd deploy && zip -r ../deploy.zip .
+      - name: Zip artifact
+        run: zip -r deploy.zip . -x ".git/*" "src/*" ".github/*" "*.ts" "tsconfig*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
