@@ -102,6 +102,7 @@ export async function searchAirports(query: string): Promise<Airport[]> {
     const kw = airport.keywords;
 
     let score = 0;
+    const isCity = airport.name.startsWith('All ');
     if (code === q) score = 100;                          // Exact code match
     else if (code.startsWith(q)) score = 90;              // Code starts with query
     else if (kwWordRegex.test(kw)) score = 85;            // Keyword exact word match (LON)
@@ -113,6 +114,9 @@ export async function searchAirports(query: string): Promise<Airport[]> {
     else if (name.toUpperCase().includes(q)) score = 40;  // Name contains query
     else if (code.includes(q)) score = 20;                // Code contains query
     else continue;
+
+    // Boost city-level entries so "All X Airports" always appears above individual airports
+    if (isCity) score += 5;
 
     scored.push({ airport, score });
   }

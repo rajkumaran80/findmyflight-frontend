@@ -85,6 +85,31 @@ export function daysBetween(startDate: string, endDate: string): number {
 }
 
 /**
+ * Format ISO date/time to "Sun 1 Mar · 12:40" format
+ */
+export function formatDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const dayNum = date.getDate();
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const time = date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  return `${day} ${dayNum} ${month} · ${time}`;
+}
+
+/**
+ * Calculate layover duration in minutes between two ISO timestamps
+ */
+export function getLayoverMinutes(arrivalTime: string, departureTime: string): number {
+  return Math.round(
+    (new Date(departureTime).getTime() - new Date(arrivalTime).getTime()) / 60000,
+  );
+}
+
+/**
  * Get stops text
  */
 export function getStopsText(stops: number): string {

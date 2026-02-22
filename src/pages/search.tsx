@@ -6,6 +6,14 @@ import { FlightResults } from '@/components/FlightResults';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { apiClient, FlightSearchResult, NormalizedFlight } from '@/lib/api';
 
+export interface FilterMeta {
+  stopsCounts: Record<string, { count: number; minPrice: number }>;
+  airlines: { code: string; name: string; count: number }[];
+  departureSlots: number[];
+  arrivalSlots: number[];
+  maxDuration: number;
+}
+
 export default function SearchPage() {
   const [results, setResults] = useState<FlightSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -13,10 +21,15 @@ export default function SearchPage() {
 
   // Filter states
   const [maxPrice, setMaxPrice] = useState<number>(5000);
-  const [maxStops, setMaxStops] = useState<number | undefined>(10);
+  const [maxStops, setMaxStops] = useState<number | undefined>(undefined);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('score');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [departureTimeSlots, setDepartureTimeSlots] = useState<boolean[]>([true, true, true, true]);
+  const [arrivalTimeSlots, setArrivalTimeSlots] = useState<boolean[]>([true, true, true, true]);
+  const [maxDuration, setMaxDuration] = useState<number | undefined>(undefined);
+  const [searchFrom, setSearchFrom] = useState('');
+  const [searchTo, setSearchTo] = useState('');
 
   // Handle search
   const handleSearch = async (searchParams: any) => {
@@ -24,15 +37,39 @@ export default function SearchPage() {
     setError(null);
     setResults(null);
 
+    // Reset filters
+    setMaxStops(undefined);
+    setSelectedAirlines([]);
+    setDepartureTimeSlots([true, true, true, true]);
+    setArrivalTimeSlots([true, true, true, true]);
+    setMaxDuration(undefined);
+    setSortBy('score');
+    setSortOrder('asc');
+
+    // Store from/to for filter labels
+    setSearchFrom(searchParams.from || '');
+    setSearchTo(searchParams.to || '');
+
     try {
       // Build the search request with only fields the backend DTO accepts
+      const breakdown = searchParams.passengerBreakdown;
+      const totalPassengers = breakdown
+        ? breakdown.adults + breakdown.children + breakdown.infants
+        : searchParams.passengers || 1;
+
       const request: any = {
         from: searchParams.from,
         to: searchParams.to,
         departDate: searchParams.departDate,
         tripType: searchParams.tripType || 'one-way',
-        passengers: searchParams.passengers || 1,
+        passengers: totalPassengers,
       };
+
+      if (breakdown) {
+        request.adults = breakdown.adults;
+        request.children = breakdown.children;
+        request.infants = breakdown.infants;
+      }
 
       if (searchParams.returnDate) {
         request.returnDate = searchParams.returnDate;
@@ -61,6 +98,54 @@ export default function SearchPage() {
     }
   };
 
+  // Compute filter metadata from results
+  const filterMeta = useMemo<FilterMeta | null>(() => {
+    if (!results || results.flights.length === 0) return null;
+    const flights = results.flights;
+
+    // Stops: count and min price for each stop category
+    const allPrices = flights.map((f) => f.price);
+    const stopsCounts: Record<string, { count: number; minPrice: number }> = {
+      any: { count: flights.length, minPrice: Math.min(...allPrices) },
+    };
+    [0, 1].forEach((s) => {
+      const matching = flights.filter((f) => f.stops <= s);
+      if (matching.length > 0) {
+        stopsCounts[s] = {
+          count: matching.length,
+          minPrice: Math.min(...matching.map((f) => f.price)),
+        };
+      }
+    });
+
+    // Airlines: unique airlines from results with counts, sorted by count desc
+    const airlineMap = new Map<string, { code: string; name: string; count: number }>();
+    flights.forEach((f) => {
+      const existing = airlineMap.get(f.airlineCode);
+      if (existing) {
+        existing.count++;
+      } else {
+        airlineMap.set(f.airlineCode, { code: f.airlineCode, name: f.airline, count: 1 });
+      }
+    });
+    const airlines = Array.from(airlineMap.values()).sort((a, b) => b.count - a.count);
+
+    // Flight time slots: 00-06, 06-12, 12-18, 18-24
+    const departureSlots = [0, 0, 0, 0];
+    const arrivalSlots = [0, 0, 0, 0];
+    flights.forEach((f) => {
+      const depHour = new Date(f.departureTime).getHours();
+      const arrHour = new Date(f.arrivalTime).getHours();
+      departureSlots[Math.floor(depHour / 6)]++;
+      arrivalSlots[Math.floor(arrHour / 6)]++;
+    });
+
+    // Max duration
+    const maxDur = Math.max(...flights.map((f) => f.duration));
+
+    return { stopsCounts, airlines, departureSlots, arrivalSlots, maxDuration: maxDur };
+  }, [results]);
+
   // Apply filters to results
   const filteredResults = useMemo(() => {
     if (!results) return null;
@@ -82,10 +167,33 @@ export default function SearchPage() {
       flights = flights.filter((f) => selectedAirlines.includes(f.airlineCode));
     }
 
+    // Apply departure time slot filter
+    if (departureTimeSlots.some((s) => !s)) {
+      flights = flights.filter((f) => {
+        const hour = new Date(f.departureTime).getHours();
+        const slot = Math.floor(hour / 6);
+        return departureTimeSlots[slot];
+      });
+    }
+
+    // Apply arrival time slot filter
+    if (arrivalTimeSlots.some((s) => !s)) {
+      flights = flights.filter((f) => {
+        const hour = new Date(f.arrivalTime).getHours();
+        const slot = Math.floor(hour / 6);
+        return arrivalTimeSlots[slot];
+      });
+    }
+
+    // Apply duration filter
+    if (maxDuration !== undefined) {
+      flights = flights.filter((f) => f.duration <= maxDuration);
+    }
+
     // Apply sorting
     flights = flights.sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
+      let aVal: number;
+      let bVal: number;
 
       switch (sortBy) {
         case 'price':
@@ -115,7 +223,7 @@ export default function SearchPage() {
       flights,
       totalResults: flights.length,
     };
-  }, [results, maxPrice, maxStops, selectedAirlines, sortBy, sortOrder]);
+  }, [results, maxPrice, maxStops, selectedAirlines, departureTimeSlots, arrivalTimeSlots, maxDuration, sortBy, sortOrder]);
 
   const handleBook = (flight: NormalizedFlight) => {
     // Track booking attempt (can be connected to analytics)
@@ -154,19 +262,33 @@ export default function SearchPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Sidebar Filters */}
             <div className="hidden md:block md:col-span-1">
-              <FilterSidebar
-                priceRange={priceRange}
-                onPriceChange={setMaxPrice}
-                onStopsChange={setMaxStops}
-                onAirlinesChange={setSelectedAirlines}
-                onSortChange={(by, order) => {
-                  setSortBy(by);
-                  setSortOrder(order);
-                }}
-                selectedAirlines={selectedAirlines}
-                maxPrice={maxPrice}
-                maxStops={maxStops}
-              />
+              {filterMeta && (
+                <FilterSidebar
+                  filterMeta={filterMeta}
+                  fromAirport={searchFrom}
+                  toAirport={searchTo}
+                  currency={results?.flights[0]?.currency || 'USD'}
+                  priceRange={priceRange}
+                  maxPrice={maxPrice}
+                  maxStops={maxStops}
+                  selectedAirlines={selectedAirlines}
+                  departureTimeSlots={departureTimeSlots}
+                  arrivalTimeSlots={arrivalTimeSlots}
+                  maxDuration={maxDuration}
+                  maxDurationLimit={filterMeta.maxDuration}
+                  sortBy={sortBy}
+                  onPriceChange={setMaxPrice}
+                  onStopsChange={setMaxStops}
+                  onAirlinesChange={setSelectedAirlines}
+                  onDepartureTimeSlotsChange={setDepartureTimeSlots}
+                  onArrivalTimeSlotsChange={setArrivalTimeSlots}
+                  onDurationChange={setMaxDuration}
+                  onSortChange={(by, order) => {
+                    setSortBy(by);
+                    setSortOrder(order);
+                  }}
+                />
+              )}
             </div>
 
             {/* Main Results */}

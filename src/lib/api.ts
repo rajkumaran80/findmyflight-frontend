@@ -3,6 +3,28 @@ import axios, { AxiosInstance } from 'axios';
 /**
  * API client for communicating with the backend
  */
+export interface FlightSegmentDetail {
+  departureAirport: string;
+  departureTerminal?: string;
+  departureTime: string;
+  arrivalAirport: string;
+  arrivalTerminal?: string;
+  arrivalTime: string;
+  carrierCode: string;
+  carrierName?: string;
+  flightNumber: string;
+  aircraft?: string;
+  duration: number;
+  cabin?: string;
+}
+
+export interface FlightItinerary {
+  direction: 'outbound' | 'inbound';
+  duration: number;
+  segments: FlightSegmentDetail[];
+  stops: number;
+}
+
 export interface NormalizedFlight {
   id: string;
   provider: string;
@@ -13,6 +35,7 @@ export interface NormalizedFlight {
   duration: number;
   stops: number;
   stopDetails?: any[];
+  itineraries?: FlightItinerary[];
   price: number;
   currency: string;
   bookingUrl: string;

@@ -84571,3 +84571,21 @@
 307326,"ZZ-0002","small_airport","Glorioso Islands Airstrip",-11.584277777799999,47.296388888900005,11,"AF","TF","TF-U-A","Grande Glorieuse","no",,,,,,,
 346788,"ZZ-0003","small_airport","Fainting Goat Airport",32.110587,-97.356312,690,"NA","US","US-TX","Blum","no",,,"87TX","87TX",,,
 599952,"ZZ-0004","heliport","(Bogus)Jezero Crater(Location is India not Planet Mars)",18.44,77.45,8530,"AF","ZZ","ZZ-U-A",,"no","JZRO",,,,,,
+900001,"LON","city","All London Airports",51.5074,-0.1278,0,"EU","GB","GB-ENG","London","yes",,"LON",,,,,,"LHR, LGW, STN, LTN, LCY, SEN"
+900002,"NYC","city","All New York Airports",40.7128,-74.006,0,"NA","US","US-NY","New York","yes",,"NYC",,,,,,"JFK, LGA, EWR, Newark"
+900003,"PAR","city","All Paris Airports",48.8566,2.3522,0,"EU","FR","FR-IDF","Paris","yes",,"PAR",,,,,,"CDG, ORY"
+900004,"MOW","city","All Moscow Airports",55.7558,37.6173,0,"EU","RU","RU-MOW","Moscow","yes",,"MOW",,,,,,"SVO, DME, VKO"
+900005,"TYO","city","All Tokyo Airports",35.6762,139.6503,0,"AS","JP","JP-13","Tokyo","yes",,"TYO",,,,,,"NRT, HND, Narita, Haneda"
+900006,"BJS","city","All Beijing Airports",39.9042,116.4074,0,"AS","CN","CN-11","Beijing","yes",,"BJS",,,,,,"PEK, PKX, Peking"
+900007,"MIL","city","All Milan Airports",45.4642,9.19,0,"EU","IT","IT-25","Milan","yes",,"MIL",,,,,,"MXP, LIN, BGY, Malpensa, Linate"
+900008,"CHI","city","All Chicago Airports",41.8781,-87.6298,0,"NA","US","US-IL","Chicago","yes",,"CHI",,,,,,"ORD, MDW, OHare, Midway"
+900009,"WAS","city","All Washington DC Airports",38.9072,-77.0369,0,"NA","US","US-DC","Washington","yes",,"WAS",,,,,,"IAD, DCA, BWI, Dulles, Reagan"
+900010,"BUE","city","All Buenos Aires Airports",-34.6037,-58.3816,0,"SA","AR","AR-C","Buenos Aires","yes",,"BUE",,,,,,"EZE, AEP"
+900011,"SAO","city","All Sao Paulo Airports",-23.5505,-46.6333,0,"SA","BR","BR-SP","Sao Paulo","yes",,"SAO",,,,,,"GRU, CGH, VCP, Guarulhos, Congonhas"
+900012,"OSA","city","All Osaka Airports",34.6937,135.5023,0,"AS","JP","JP-27","Osaka","yes",,"OSA",,,,,,"KIX, ITM, Kansai"
+900013,"SEL","city","All Seoul Airports",37.5665,126.978,0,"AS","KR","KR-11","Seoul","yes",,"SEL",,,,,,"ICN, GMP, Incheon, Gimpo"
+900014,"STO","city","All Stockholm Airports",59.3293,18.0686,0,"EU","SE","SE-AB","Stockholm","yes",,"STO",,,,,,"ARN, BMA, NYO, Arlanda, Bromma"
+900016,"JKT","city","All Jakarta Airports",-6.2088,106.8456,0,"AS","ID","ID-JK","Jakarta","yes",,"JKT",,,,,,"CGK, HLP, Soekarno-Hatta"
+900017,"RIO","city","All Rio de Janeiro Airports",-22.9068,-43.1729,0,"SA","BR","BR-RJ","Rio de Janeiro","yes",,"RIO",,,,,,"GIG, SDU, Galeao, Santos Dumont"
+900018,"YTO","city","All Toronto Airports",43.6532,-79.3832,0,"NA","CA","CA-ON","Toronto","yes",,"YTO",,,,,,"YYZ, YTZ, Pearson, Billy Bishop"
+900019,"YMQ","city","All Montreal Airports",45.5017,-73.5673,0,"NA","CA","CA-QC","Montreal","yes",,"YMQ",,,,,,"YUL, YMX, Trudeau"

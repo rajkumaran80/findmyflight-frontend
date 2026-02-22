@@ -31,13 +31,20 @@ export default function PassengerSelect({ value, onChange }: PassengerSelectProp
     const maxPassengers = 9;
     const total = value.adults + value.children + value.infants;
     if (total < maxPassengers) {
+      // Infants cannot exceed adults
+      if (type === 'infants' && value.infants >= value.adults) return;
       onChange({ ...value, [type]: value[type] + 1 });
     }
   };
 
   const handleDecrement = (type: keyof PassengerBreakdown) => {
     if (value[type] > (type === 'adults' ? 1 : 0)) {
-      onChange({ ...value, [type]: value[type] - 1 });
+      const next = { ...value, [type]: value[type] - 1 };
+      // If reducing adults, also reduce infants if they would exceed adults
+      if (type === 'adults' && next.infants > next.adults) {
+        next.infants = next.adults;
+      }
+      onChange(next);
     }
   };
 
@@ -67,7 +74,7 @@ export default function PassengerSelect({ value, onChange }: PassengerSelectProp
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="font-semibold text-gray-900">Adults</div>
-                <div className="text-xs text-gray-500">18+</div>
+                <div className="text-xs text-gray-500">12+ years</div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -95,7 +102,7 @@ export default function PassengerSelect({ value, onChange }: PassengerSelectProp
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="font-semibold text-gray-900">Children</div>
-                <div className="text-xs text-gray-500">2-17 years</div>
+                <div className="text-xs text-gray-500">2–11 years</div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -123,7 +130,7 @@ export default function PassengerSelect({ value, onChange }: PassengerSelectProp
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="font-semibold text-gray-900">Infants</div>
-                <div className="text-xs text-gray-500">0-1 year</div>
+                <div className="text-xs text-gray-500">Under 2, on lap</div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -147,8 +154,9 @@ export default function PassengerSelect({ value, onChange }: PassengerSelectProp
           </div>
 
           {/* Total Info */}
-          <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
-            Total: {total} passenger{total !== 1 ? 's' : ''} (max 9)
+          <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-500 space-y-1">
+            <div>Total: {total} passenger{total !== 1 ? 's' : ''} (max 9)</div>
+            {value.infants > 0 && <div>Each infant must be accompanied by an adult</div>}
           </div>
         </div>
       )}
