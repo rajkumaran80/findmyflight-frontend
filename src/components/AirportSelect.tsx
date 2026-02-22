@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, MapPin } from 'lucide-react';
-import { Airport, searchAirports, getAirportDetails } from '@/lib/airports';
+import { Airport, searchAirports, getAirportDetails, getAirportByCode } from '@/lib/airports';
 
 interface AirportSelectProps {
   value: string;
@@ -49,11 +49,20 @@ export default function AirportSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync selected airport when value is cleared externally
+  // Sync selected airport when value changes externally (e.g. swap)
   useEffect(() => {
     if (!value) {
       setSelectedAirport(null);
       setQuery('');
+    } else if (!selectedAirport || selectedAirport.code !== value) {
+      setQuery('');
+      getAirportByCode(value).then((airport) => {
+        if (airport) {
+          setSelectedAirport(airport);
+        } else {
+          setSelectedAirport({ code: value, name: value, city: '', country: '', keywords: '' });
+        }
+      });
     }
   }, [value]);
 

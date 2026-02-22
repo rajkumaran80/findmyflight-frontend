@@ -39,7 +39,7 @@ function createLeg(from = '', to = '', departDate = ''): FlightLeg {
 }
 
 export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = false }) => {
-  const [tripType, setTripType] = useState<'one-way' | 'round-trip' | 'multi-city'>('one-way');
+  const [tripType, setTripType] = useState<'one-way' | 'round-trip' | 'multi-city'>('round-trip');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [departDate, setDepartDate] = useState('');
@@ -153,7 +153,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
     <form onSubmit={handleSearch} className="w-full bg-white rounded-lg shadow-md p-6 space-y-5">
       {/* Trip Type Selection */}
       <div className="flex gap-4 border-b pb-4">
-        {(['one-way', 'round-trip', 'multi-city'] as const).map((type) => (
+        {(['round-trip', 'one-way', 'multi-city'] as const).map((type) => (
           <label key={type} className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
@@ -171,8 +171,8 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
       {/* One-way / Round-trip layout */}
       {tripType !== 'multi-city' && (
         <>
-          {/* From - Swap - To in one line */}
-          <div className="flex items-end gap-2">
+          {/* From - Swap - To */}
+          <div className="flex flex-col md:flex-row md:items-end gap-2">
             <div className="flex-1">
               <AirportSelect
                 value={from}
@@ -184,10 +184,10 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
             <button
               type="button"
               onClick={swapAirports}
-              className="mb-0.5 p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+              className="self-center md:mb-0.5 p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               title="Swap airports"
             >
-              <ArrowRightLeft size={20} className="text-gray-500" />
+              <ArrowRightLeft size={20} className="text-gray-500 rotate-90 md:rotate-0" />
             </button>
             <div className="flex-1">
               <AirportSelect
@@ -255,8 +255,8 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
                 )}
               </div>
 
-              {/* From - Swap - To in one line */}
-              <div className="flex items-end gap-2 mb-3">
+              {/* From - Swap - To */}
+              <div className="flex flex-col md:flex-row md:items-end gap-2 mb-3">
                 <div className="flex-1">
                   <AirportSelect
                     value={leg.from}
@@ -268,10 +268,10 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
                 <button
                   type="button"
                   onClick={() => swapLegAirports(index)}
-                  className="mb-0.5 p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                  className="self-center md:mb-0.5 p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
                   title="Swap airports"
                 >
-                  <ArrowRightLeft size={18} className="text-gray-500" />
+                  <ArrowRightLeft size={18} className="text-gray-500 rotate-90 md:rotate-0" />
                 </button>
                 <div className="flex-1">
                   <AirportSelect

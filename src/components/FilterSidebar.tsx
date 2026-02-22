@@ -28,6 +28,7 @@ interface FilterSidebarProps {
   onArrivalTimeSlotsChange: (slots: boolean[]) => void;
   onDurationChange: (maxDuration: number | undefined) => void;
   onSortChange: (sortBy: string, sortOrder: string) => void;
+  onResetFilters: () => void;
 }
 
 const TIME_SLOT_LABELS = ['00:00\u201305:59', '06:00\u201311:59', '12:00\u201317:59', '18:00\u201323:59'];
@@ -53,6 +54,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onArrivalTimeSlotsChange,
   onDurationChange,
   onSortChange,
+  onResetFilters,
 }) => {
   const [showAllAirlines, setShowAllAirlines] = useState(false);
 
@@ -79,9 +81,17 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   return (
     <div className="w-full md:w-64 bg-white rounded-lg shadow-md p-5">
-      <div className="flex items-center gap-2 mb-5">
-        <Filter size={18} />
-        <h2 className="text-base font-bold text-gray-900">Filters</h2>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <Filter size={18} />
+          <h2 className="text-base font-bold text-gray-900">Filters</h2>
+        </div>
+        <button
+          onClick={onResetFilters}
+          className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+        >
+          Reset all
+        </button>
       </div>
 
       {/* Sort Options */}
@@ -121,59 +131,53 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               </div>
             </label>
           )}
-          {/* Direct only */}
-          {filterMeta.stopsCounts['0'] && (
-            <label className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded hover:bg-gray-50">
-              <input
-                type="radio"
-                name="stops"
-                checked={maxStops === 0}
-                onChange={() => onStopsChange(0)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-800">Direct only</span>
-                  <span className="text-xs text-gray-500">
-                    {filterMeta.stopsCounts['0'].count}
-                  </span>
+          {/* Dynamic stop options */}
+          {[0, 1, 2, 3].map((s) => {
+            const data = filterMeta.stopsCounts[String(s)];
+            if (!data) return null;
+            const label = s === 0 ? 'Direct only' : `${s} stop${s > 1 ? 's' : ''} max`;
+            return (
+              <label key={s} className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="stops"
+                  checked={maxStops === s}
+                  onChange={() => onStopsChange(s)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-800">{label}</span>
+                    <span className="text-xs text-gray-500">{data.count}</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    From {formatPrice(data.minPrice, currency)}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-400">
-                  From {formatPrice(filterMeta.stopsCounts['0'].minPrice, currency)}
-                </div>
-              </div>
-            </label>
-          )}
-          {/* 1 stop max */}
-          {filterMeta.stopsCounts['1'] && (
-            <label className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded hover:bg-gray-50">
-              <input
-                type="radio"
-                name="stops"
-                checked={maxStops === 1}
-                onChange={() => onStopsChange(1)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-800">1 stop max</span>
-                  <span className="text-xs text-gray-500">
-                    {filterMeta.stopsCounts['1'].count}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-400">
-                  From {formatPrice(filterMeta.stopsCounts['1'].minPrice, currency)}
-                </div>
-              </div>
-            </label>
-          )}
+              </label>
+            );
+          })}
         </div>
       </div>
 
       {/* Airlines Filter */}
       {filterMeta.airlines.length > 0 && (
         <div className="mb-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Airlines</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-700">Airlines</h3>
+            <button
+              onClick={() => {
+                if (selectedAirlines.length === filterMeta.airlines.length) {
+                  onAirlinesChange([]);
+                } else {
+                  onAirlinesChange(filterMeta.airlines.map((a) => a.code));
+                }
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800"
+            >
+              {selectedAirlines.length === filterMeta.airlines.length ? 'Deselect all' : 'Select all'}
+            </button>
+          </div>
           <div className="space-y-1">
             {displayedAirlines.map((airline) => (
               <label

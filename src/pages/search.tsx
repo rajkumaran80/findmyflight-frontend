@@ -108,7 +108,8 @@ export default function SearchPage() {
     const stopsCounts: Record<string, { count: number; minPrice: number }> = {
       any: { count: flights.length, minPrice: Math.min(...allPrices) },
     };
-    [0, 1].forEach((s) => {
+    const maxStopsInResults = Math.max(...flights.map((f) => f.stops));
+    for (let s = 0; s <= Math.min(maxStopsInResults, 3); s++) {
       const matching = flights.filter((f) => f.stops <= s);
       if (matching.length > 0) {
         stopsCounts[s] = {
@@ -116,7 +117,7 @@ export default function SearchPage() {
           minPrice: Math.min(...matching.map((f) => f.price)),
         };
       }
-    });
+    }
 
     // Airlines: unique airlines from results with counts, sorted by count desc
     const airlineMap = new Map<string, { code: string; name: string; count: number }>();
@@ -225,6 +226,19 @@ export default function SearchPage() {
     };
   }, [results, maxPrice, maxStops, selectedAirlines, departureTimeSlots, arrivalTimeSlots, maxDuration, sortBy, sortOrder]);
 
+  const handleResetFilters = () => {
+    setMaxStops(undefined);
+    setSelectedAirlines([]);
+    setDepartureTimeSlots([true, true, true, true]);
+    setArrivalTimeSlots([true, true, true, true]);
+    setMaxDuration(undefined);
+    setSortBy('score');
+    setSortOrder('asc');
+    if (results && results.flights.length > 0) {
+      setMaxPrice(Math.max(...results.flights.map((f) => f.price)));
+    }
+  };
+
   const handleBook = (flight: NormalizedFlight) => {
     // Track booking attempt (can be connected to analytics)
     console.log('Booking flight:', flight.id);
@@ -287,6 +301,7 @@ export default function SearchPage() {
                     setSortBy(by);
                     setSortOrder(order);
                   }}
+                  onResetFilters={handleResetFilters}
                 />
               )}
             </div>
