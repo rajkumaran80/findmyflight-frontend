@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Flight comparison platform frontend",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3001",
     "build": "next build",
     "start": "node node_modules/next/dist/bin/next start -p 8080",
     "lint": "next lint",
