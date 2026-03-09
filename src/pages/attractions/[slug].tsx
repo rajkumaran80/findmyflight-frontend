@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import axios from 'axios';
+import { GetStaticPaths, GetStaticProps } from 'next';
 
 interface Photo {
   id: string;
@@ -36,59 +35,40 @@ interface AttractionPage {
   updatedAt: string;
 }
 
-const ATTRACTIONS_API = process.env.NEXT_PUBLIC_ATTRACTIONS_API_URL || 'http://localhost:3002';
+const ATTRACTIONS_API = process.env.ATTRACTIONS_API_URL || 'http://localhost:3002';
 
 function removeInlineAffiliateWidgets(html: string): string {
   return html.replace(/<div class="affiliate-widget"[^>]*>[\s\S]*?<\/div>/g, '');
 }
 
-export default function AttractionDetailPage() {
-  const router = useRouter();
-  const { slug } = router.query;
-  const [attraction, setAttraction] = useState<AttractionPage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const res = await fetch(`${ATTRACTIONS_API}/api/attractions/pages`);
+  const attractions: { slug: string }[] = await res.json();
 
-  useEffect(() => {
-    if (!slug || typeof slug !== 'string') return;
+  return {
+    paths: attractions.map((a) => ({ params: { slug: a.slug } })),
+    fallback: 'blocking', // generate unknown slugs on demand
+  };
+};
 
-    axios
-      .get(`${ATTRACTIONS_API}/api/attractions/page/${slug}`)
-      .then((res) => setAttraction(res.data))
-      .catch((err) => {
-        if (err.response?.status === 404) {
-          setError('Attraction not found');
-        } else {
-          setError('Failed to load attraction');
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [slug]);
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const slug = params?.slug as string;
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      </main>
-    );
+  const res = await fetch(`${ATTRACTIONS_API}/api/attractions/page/${slug}`);
+
+  if (!res.ok || res.status === 404) {
+    return { notFound: true };
   }
 
-  if (error || !attraction) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Not Found'}</h1>
-          <Link href="/attractions" className="text-blue-600 hover:text-blue-800">
-            &larr; Back to Attractions
-          </Link>
-        </div>
-      </main>
-    );
-  }
+  const attraction: AttractionPage = await res.json();
 
+  return {
+    props: { attraction },
+    revalidate: false, // only revalidate on-demand via /api/revalidate
+  };
+};
+
+export default function AttractionDetailPage({ attraction }: { attraction: AttractionPage }) {
   const processedHtml = attraction.contentHtml
     ? removeInlineAffiliateWidgets(attraction.contentHtml)
     : '';
@@ -126,7 +106,7 @@ export default function AttractionDetailPage() {
           </div>
         </div>
 
-        {/* Hero Image — constrained to content width */}
+        {/* Hero Image */}
         {attraction.photos.length > 0 && (
           <div className="max-w-7xl mx-auto px-4 mt-6">
             <div className="hero-image">
@@ -140,13 +120,12 @@ export default function AttractionDetailPage() {
 
         {/* 3-Column Layout */}
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Location badge */}
           <div className="text-sm text-blue-600 font-semibold uppercase tracking-wide mb-4">
             {attraction.city}, {attraction.country}
           </div>
 
           <div className="layout-grid">
-            {/* LEFT SIDEBAR — Booking Widgets */}
+            {/* LEFT SIDEBAR */}
             <aside className="sidebar-left">
               <div className="widget-card">
                 <div className="widget-icon">✈️</div>
@@ -197,7 +176,6 @@ export default function AttractionDetailPage() {
                 dangerouslySetInnerHTML={{ __html: processedHtml }}
               />
 
-              {/* Photo gallery */}
               {attraction.photos.length > 1 && (
                 <div className="mt-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Photos</h2>
@@ -222,7 +200,7 @@ export default function AttractionDetailPage() {
               </div>
             </div>
 
-            {/* RIGHT SIDEBAR — Nearby Attractions */}
+            {/* RIGHT SIDEBAR */}
             <aside className="sidebar-right">
               <div className="widget-card">
                 <h3 className="widget-title">Nearby Attractions</h3>
@@ -272,31 +250,13 @@ export default function AttractionDetailPage() {
       </main>
 
       <style jsx global>{`
-        /* Hero Image */
-        .hero-image {
-          height: 320px;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-        .hero-image img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        @media (max-width: 768px) {
-          .hero-image { height: 200px; }
-        }
+        .hero-image { height: 320px; border-radius: 12px; overflow: hidden; }
+        .hero-image img { width: 100%; height: 100%; object-fit: cover; }
+        @media (max-width: 768px) { .hero-image { height: 200px; } }
 
-        /* 3-Column Layout */
-        .layout-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 24px;
-        }
+        .layout-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
         @media (min-width: 1024px) {
-          .layout-grid {
-            grid-template-columns: 240px 1fr 260px;
-          }
+          .layout-grid { grid-template-columns: 240px 1fr 260px; }
           .sidebar-left { order: 1; }
           .main-content { order: 2; }
           .sidebar-right { order: 3; }
@@ -306,120 +266,45 @@ export default function AttractionDetailPage() {
           .main-content { order: 1; }
           .sidebar-right { order: 3; }
         }
-
-        /* Sticky sidebars on desktop */
         @media (min-width: 1024px) {
-          .sidebar-left, .sidebar-right {
-            position: sticky;
-            top: 24px;
-            align-self: start;
-          }
+          .sidebar-left, .sidebar-right { position: sticky; top: 24px; align-self: start; }
         }
 
-        /* Widget Cards */
         .widget-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 16px;
-          margin-bottom: 16px;
-          border: 1px solid #f0f0f0;
+          background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          padding: 16px; margin-bottom: 16px; border: 1px solid #f0f0f0;
         }
         .widget-icon { font-size: 24px; margin-bottom: 8px; }
-        .widget-title {
-          font-size: 15px;
-          font-weight: 700;
-          color: #1a1a2e;
-          margin-bottom: 6px;
-        }
-        .widget-title-sm {
-          font-size: 11px;
-          font-weight: 600;
-          color: #999;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 4px;
-        }
-        .widget-desc {
-          font-size: 13px;
-          color: #666;
-          line-height: 1.5;
-          margin-bottom: 12px;
-        }
-        .widget-desc-last {
-          font-size: 13px;
-          color: #444;
-          line-height: 1.5;
-          margin-bottom: 0;
-        }
-        .widget-btn {
-          display: block;
-          text-align: center;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #fff !important;
-          text-decoration: none !important;
-          transition: opacity 0.2s;
-        }
+        .widget-title { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+        .widget-title-sm { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .widget-desc { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 12px; }
+        .widget-desc-last { font-size: 13px; color: #444; line-height: 1.5; margin-bottom: 0; }
+        .widget-btn { display: block; text-align: center; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #fff !important; text-decoration: none !important; transition: opacity 0.2s; }
         .widget-btn:hover { opacity: 0.9; }
         .widget-btn-blue { background: #0770e3; }
         .widget-btn-navy { background: #003580; }
         .widget-btn-orange { background: #e67e22; }
 
-        /* Nearby Attractions */
         .nearby-list { display: flex; flex-direction: column; gap: 8px; }
-        .nearby-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 6px;
-          border-radius: 8px;
-          text-decoration: none !important;
-          transition: background 0.2s;
-        }
+        .nearby-item { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 8px; text-decoration: none !important; transition: background 0.2s; }
         .nearby-item:hover { background: #f5f7fa; }
-        .nearby-img {
-          width: 48px; height: 48px;
-          border-radius: 8px;
-          overflow: hidden;
-          flex-shrink: 0;
-          background: #eee;
-        }
+        .nearby-img { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eee; }
         .nearby-img img { width: 100%; height: 100%; object-fit: cover; }
         .nearby-img-placeholder { width: 100%; height: 100%; background: #ddd; }
         .nearby-info { display: flex; flex-direction: column; }
         .nearby-name { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
         .nearby-city { font-size: 11px; color: #999; }
 
-        /* Article Content */
-        .attraction-content h1 {
-          font-size: 2rem; font-weight: 800; color: #1a1a2e;
-          margin-bottom: 1rem; line-height: 1.2;
-        }
-        .attraction-content h2 {
-          font-size: 1.5rem; font-weight: 700; color: #1a1a2e;
-          margin-top: 2rem; margin-bottom: 0.75rem;
-        }
-        .attraction-content h3 {
-          font-size: 1.2rem; font-weight: 600; color: #333;
-          margin-top: 1.5rem; margin-bottom: 0.5rem;
-        }
+        .attraction-content h1 { font-size: 2rem; font-weight: 800; color: #1a1a2e; margin-bottom: 1rem; line-height: 1.2; }
+        .attraction-content h2 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; margin-top: 2rem; margin-bottom: 0.75rem; }
+        .attraction-content h3 { font-size: 1.2rem; font-weight: 600; color: #333; margin-top: 1.5rem; margin-bottom: 0.5rem; }
         .attraction-content p { color: #444; line-height: 1.8; margin-bottom: 1rem; }
-        .attraction-content ul, .attraction-content ol {
-          margin: 0.75rem 0; padding-left: 1.5rem;
-        }
+        .attraction-content ul, .attraction-content ol { margin: 0.75rem 0; padding-left: 1.5rem; }
         .attraction-content li { color: #444; line-height: 1.7; margin-bottom: 0.4rem; }
         .attraction-content section { margin-bottom: 1.5rem; }
         .attraction-content a { color: #4a90d9; text-decoration: underline; }
-        .attraction-content .faq-section {
-          background: #f8f9fa; border-radius: 12px;
-          padding: 1.5rem; margin-top: 2rem;
-        }
-        .attraction-content .faq-item {
-          border-bottom: 1px solid #e5e7eb; padding: 1rem 0;
-        }
+        .attraction-content .faq-section { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
+        .attraction-content .faq-item { border-bottom: 1px solid #e5e7eb; padding: 1rem 0; }
         .attraction-content .faq-item:last-child { border-bottom: none; }
       `}</style>
     </>

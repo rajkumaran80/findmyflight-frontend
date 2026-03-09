@@ -70,6 +70,24 @@ export default function Home() {
           </Link>
         </div>
 
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+          <Link href="/attractions" className="flex items-center gap-4 bg-white rounded-lg shadow p-5 hover:shadow-md transition group">
+            <div className="text-3xl">🗺️</div>
+            <div>
+              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition">Explore Attractions</h3>
+              <p className="text-sm text-gray-500">Browse travel destinations and top attractions worldwide</p>
+            </div>
+          </Link>
+          <Link href="/admin/attractions" className="flex items-center gap-4 bg-white rounded-lg shadow p-5 hover:shadow-md transition group">
+            <div className="text-3xl">⚙️</div>
+            <div>
+              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition">Admin — Attractions</h3>
+              <p className="text-sm text-gray-500">Manage and generate attraction content</p>
+            </div>
+          </Link>
+        </div>
+
         {/* Features List */}
         <div className="bg-gray-50 rounded-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Features</h2>
