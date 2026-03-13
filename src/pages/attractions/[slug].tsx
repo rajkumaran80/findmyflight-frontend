@@ -42,13 +42,16 @@ function removeInlineAffiliateWidgets(html: string): string {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const res = await fetch(`${ATTRACTIONS_API}/api/attractions/pages`);
-  const attractions: { slug: string }[] = await res.json();
-
-  return {
-    paths: attractions.map((a) => ({ params: { slug: a.slug } })),
-    fallback: 'blocking', // generate unknown slugs on demand
-  };
+  try {
+    const res = await fetch(`${ATTRACTIONS_API}/api/attractions/pages`);
+    const attractions: { slug: string }[] = await res.json();
+    return {
+      paths: attractions.map((a) => ({ params: { slug: a.slug } })),
+      fallback: 'blocking',
+    };
+  } catch {
+    return { paths: [], fallback: 'blocking' };
+  }
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
