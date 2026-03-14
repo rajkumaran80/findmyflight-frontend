@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - findmyflight-frontend-prod
+name: Build and deploy Docker image to Azure Web App - findmyflight-frontend-prod
 
 on:
   push:
@@ -10,51 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Next.js app
-        run: npm run build
-        env:
-          NEXT_PUBLIC_API_URL: https://findmyflight-backend-prod-hyatccg4gufhcaet.uksouth-01.azurewebsites.net
-
-      - name: Remove dev dependencies for production
-        run: npm prune --omit=dev
-
-      - name: Zip artifact
-        run: zip -r deploy.zip . -x ".git/*" "src/*" ".github/*" "*.ts" "tsconfig*"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: deploy.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
     permissions:
       id-token: write
       contents: read
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
+      - uses: actions/checkout@v4
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -63,15 +23,26 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_471E6115541648CFAC6A98BE714A72B7 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D463BC6FC13048C3B048C3D8E9CABA0F }}
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/findmyflight-frontend:${{ github.sha }}
+          LATEST=${{ secrets.ACR_NAME }}.azurecr.io/findmyflight-frontend:latest
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            -t $IMAGE -t $LATEST .
+          docker push $IMAGE
+          docker push $LATEST
+
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'findmyflight-frontend-prod'
           slot-name: 'Production'
-          package: deploy.zip
-          type: zip
-
-
-
-          
+          images: '${{ secrets.ACR_NAME }}.azurecr.io/findmyflight-frontend:${{ github.sha }}'

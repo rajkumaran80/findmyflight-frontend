@@ -16,7 +16,7 @@ interface AttractionSummary {
   updatedAt: string;
 }
 
-const ATTRACTIONS_API = process.env.NEXT_PUBLIC_ATTRACTIONS_API_URL || 'http://localhost:3002';
+const ATTRACTIONS_API = '';
 
 export default function AttractionsPage() {
   const [attractions, setAttractions] = useState<AttractionSummary[]>([]);

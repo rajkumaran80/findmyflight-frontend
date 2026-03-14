@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-const API = process.env.NEXT_PUBLIC_ATTRACTIONS_API_URL || 'http://localhost:8081';
+const API = '';
 
 interface Photo {
   id: string;
