@@ -35,7 +35,7 @@ interface AttractionPage {
   updatedAt: string;
 }
 
-const ATTRACTIONS_API = process.env.BACKEND_URL || 'http://localhost:8081';
+const ATTRACTIONS_API = process.env.BACKEND_URL;
 
 function removeInlineAffiliateWidgets(html: string): string {
   return html.replace(/<div class="affiliate-widget"[^>]*>[\s\S]*?<\/div>/g, '');
