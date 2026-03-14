@@ -25,13 +25,15 @@ export default function AirportSelect({
   useEffect(() => {
     if (query.length > 0) {
       let cancelled = false;
-      searchAirports(query).then((filtered) => {
-        if (!cancelled) {
-          setResults(filtered);
-          setIsOpen(true);
-        }
-      });
-      return () => { cancelled = true; };
+      const timer = setTimeout(() => {
+        searchAirports(query).then((filtered) => {
+          if (!cancelled) {
+            setResults(filtered);
+            setIsOpen(true);
+          }
+        });
+      }, 250);
+      return () => { cancelled = true; clearTimeout(timer); };
     } else {
       setResults([]);
       if (!selectedAirport) setIsOpen(false);
