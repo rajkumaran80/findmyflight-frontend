@@ -34,9 +34,7 @@ jobs:
         run: |
           IMAGE=${{ secrets.ACR_NAME }}.azurecr.io/findmyflight-frontend:${{ github.sha }}
           LATEST=${{ secrets.ACR_NAME }}.azurecr.io/findmyflight-frontend:latest
-          docker build \
-            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
-            -t $IMAGE -t $LATEST .
+          docker build -t $IMAGE -t $LATEST .
           docker push $IMAGE
           docker push $LATEST
 
