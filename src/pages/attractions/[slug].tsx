@@ -33,6 +33,8 @@ interface AttractionPage {
   photos: Photo[];
   nearbyAttractions: NearbyAttraction[];
   nearestAirportCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
   updatedAt: string;
 }
 
@@ -178,7 +180,11 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 <h3 className="widget-title">Find Hotels</h3>
                 <p className="widget-desc">Best stays in {attraction.city}</p>
                 <a
-                  href={`https://www.booking.com/searchresults.html?ss=${cityEncoded}%2C+${countryEncoded}`}
+                  href={
+                    attraction.latitude && attraction.longitude
+                      ? `https://www.booking.com/searchresults.html?ss=${cityEncoded}&latitude=${attraction.latitude}&longitude=${attraction.longitude}`
+                      : `https://www.booking.com/searchresults.html?ss=${cityEncoded}%2C+${countryEncoded}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="widget-btn widget-btn-navy"
