@@ -79,10 +79,22 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const photos = attraction.photos;
+  const touchStartX = React.useRef<number | null>(null);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const prevPhoto = useCallback(() => setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i)), []);
   const nextPhoto = useCallback(() => setLightboxIndex((i) => (i !== null && i < photos.length - 1 ? i + 1 : i)), [photos.length]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) dx < 0 ? nextPhoto() : prevPhoto();
+    touchStartX.current = null;
+  }, [prevPhoto, nextPhoto]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -272,7 +284,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
 
       {/* Lightbox */}
       {lightboxIndex !== null && (
-        <div className="lightbox-overlay" onClick={closeLightbox}>
+        <div className="lightbox-overlay" onClick={closeLightbox} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <button className="lightbox-close" onClick={closeLightbox} aria-label="Close">✕</button>
 
           {lightboxIndex > 0 && (
