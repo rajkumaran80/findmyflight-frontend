@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { GetStaticPaths, GetStaticProps } from 'next';
@@ -32,6 +32,7 @@ interface AttractionPage {
   entryFee: string | null;
   photos: Photo[];
   nearbyAttractions: NearbyAttraction[];
+  nearestAirportCode: string | null;
   updatedAt: string;
 }
 
@@ -78,6 +79,34 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
 
   const cityEncoded = encodeURIComponent(attraction.city);
   const countryEncoded = encodeURIComponent(attraction.country);
+
+  const [skyscannerHref, setSkyscannerHref] = useState(
+    `https://www.skyscanner.com/transport/flights/anywhere/${attraction.nearestAirportCode?.toLowerCase() ?? cityEncoded}/?adultsv2=1`
+  );
+
+  useEffect(() => {
+    if (!attraction.nearestAirportCode) return;
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(`/api/airports/nearest?lat=${latitude}&lng=${longitude}`);
+          if (!res.ok) return;
+          const origin = await res.json();
+          if (origin?.code) {
+            setSkyscannerHref(
+              `https://www.skyscanner.com/transport/flights/${origin.code.toLowerCase()}/${attraction.nearestAirportCode!.toLowerCase()}/?adultsv2=1`
+            );
+          }
+        } catch {
+          // keep default href
+        }
+      },
+      () => { /* permission denied — keep default href */ }
+    );
+  }, [attraction.nearestAirportCode]);
 
   return (
     <>
@@ -135,7 +164,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 <h3 className="widget-title">Search Flights</h3>
                 <p className="widget-desc">Find cheap flights to {attraction.city}</p>
                 <a
-                  href={`https://www.skyscanner.com/transport/flights/anywhere/${cityEncoded}/?adultsv2=1`}
+                  href={skyscannerHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="widget-btn widget-btn-blue"
