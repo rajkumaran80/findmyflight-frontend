@@ -268,7 +268,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 <h3 className="widget-title">Tours & Activities</h3>
                 <p className="widget-desc">Explore things to do in {attraction.city}</p>
                 <a
-                  href={`https://www.getyourguide.com/s/?q=${cityEncoded}`}
+                  href={`https://www.getyourguide.com/s?partner_id=ZBPYYHU&q=${cityEncoded}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="widget-btn widget-btn-orange"
