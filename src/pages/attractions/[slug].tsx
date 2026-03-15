@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { GetStaticPaths, GetStaticProps } from 'next';
@@ -59,19 +59,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
-
   const res = await fetch(`${ATTRACTIONS_API}/api/attractions/page/${slug}`);
-
-  if (!res.ok || res.status === 404) {
-    return { notFound: true };
-  }
-
+  if (!res.ok || res.status === 404) return { notFound: true };
   const attraction: AttractionPage = await res.json();
-
-  return {
-    props: { attraction },
-    revalidate: false, // only revalidate on-demand via /api/revalidate
-  };
+  return { props: { attraction }, revalidate: false };
 };
 
 export default function AttractionDetailPage({ attraction }: { attraction: AttractionPage }) {
@@ -86,10 +77,26 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
     `https://www.skyscanner.com/transport/flights/anywhere/${attraction.nearestAirportCode?.toLowerCase() ?? cityEncoded}/?adultsv2=1`
   );
 
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const photos = attraction.photos;
+
+  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+  const prevPhoto = useCallback(() => setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i)), []);
+  const nextPhoto = useCallback(() => setLightboxIndex((i) => (i !== null && i < photos.length - 1 ? i + 1 : i)), [photos.length]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') prevPhoto();
+      if (e.key === 'ArrowRight') nextPhoto();
+    };
+    if (lightboxIndex !== null) window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxIndex, closeLightbox, prevPhoto, nextPhoto]);
+
   useEffect(() => {
     if (!attraction.nearestAirportCode) return;
     if (!navigator.geolocation) return;
-
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -102,11 +109,9 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
               `https://www.skyscanner.com/transport/flights/${origin.code.toLowerCase()}/${attraction.nearestAirportCode!.toLowerCase()}/?adultsv2=1`
             );
           }
-        } catch {
-          // keep default href
-        }
+        } catch { /* keep default */ }
       },
-      () => { /* permission denied — keep default href */ }
+      () => { /* permission denied */ }
     );
   }, [attraction.nearestAirportCode]);
 
@@ -114,23 +119,18 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
     <>
       <Head>
         <title>{attraction.seoTitle || attraction.name} | Travellyhub</title>
-        {attraction.metaDescription && (
-          <meta name="description" content={attraction.metaDescription} />
-        )}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {attraction.metaDescription && <meta name="description" content={attraction.metaDescription} />}
         <meta property="og:title" content={attraction.seoTitle || attraction.name} />
-        {attraction.metaDescription && (
-          <meta property="og:description" content={attraction.metaDescription} />
-        )}
-        {attraction.photos[0] && (
-          <meta property="og:image" content={attraction.photos[0].imageUrl} />
-        )}
+        {attraction.metaDescription && <meta property="og:description" content={attraction.metaDescription} />}
+        {photos[0] && <meta property="og:image" content={photos[0].imageUrl} />}
       </Head>
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-gray-50" style={{ overflowX: 'hidden' }}>
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 py-3">
-            <nav className="text-sm text-gray-500">
+            <nav className="text-sm text-gray-500" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
               <Link href="/" className="hover:text-blue-600">Home</Link>
               <span className="mx-2">/</span>
               <Link href="/attractions" className="hover:text-blue-600">Attractions</Link>
@@ -141,13 +141,10 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
         </div>
 
         {/* Hero Image */}
-        {attraction.photos.length > 0 && (
+        {photos.length > 0 && (
           <div className="max-w-7xl mx-auto px-4 mt-6">
-            <div className="hero-image">
-              <img
-                src={attraction.photos[0].imageUrl}
-                alt={attraction.photos[0].altText}
-              />
+            <div className="hero-image" onClick={() => setLightboxIndex(0)} style={{ cursor: 'pointer' }}>
+              <img src={photos[0].imageUrl} alt={photos[0].altText} />
             </div>
           </div>
         )}
@@ -165,12 +162,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 <div className="widget-icon">✈️</div>
                 <h3 className="widget-title">Search Flights</h3>
                 <p className="widget-desc">Find cheap flights to {attraction.city}</p>
-                <a
-                  href={skyscannerHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="widget-btn widget-btn-blue"
-                >
+                <a href={skyscannerHref} target="_blank" rel="noopener noreferrer" className="widget-btn widget-btn-blue">
                   Search on Skyscanner
                 </a>
               </div>
@@ -185,9 +177,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                       ? `https://www.booking.com/searchresults.html?ss=${cityEncoded}&latitude=${attraction.latitude}&longitude=${attraction.longitude}`
                       : `https://www.booking.com/searchresults.html?ss=${cityEncoded}%2C+${countryEncoded}`
                   }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="widget-btn widget-btn-navy"
+                  target="_blank" rel="noopener noreferrer" className="widget-btn widget-btn-navy"
                 >
                   Search on Booking.com
                 </a>
@@ -214,18 +204,19 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 dangerouslySetInnerHTML={{ __html: processedHtml }}
               />
 
-              {attraction.photos.length > 1 && (
+              {photos.length > 1 && (
                 <div className="mt-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Photos</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {attraction.photos.map((photo) => (
-                      <div key={photo.id} className="rounded-lg overflow-hidden shadow-sm">
-                        <img
-                          src={photo.imageUrl}
-                          alt={photo.altText}
-                          className="w-full h-40 object-cover"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {photos.map((photo, idx) => (
+                      <button
+                        key={photo.id}
+                        onClick={() => setLightboxIndex(idx)}
+                        className="photo-thumb"
+                        aria-label={`View ${photo.altText}`}
+                      >
+                        <img src={photo.imageUrl} alt={photo.altText} className="w-full h-36 object-cover" />
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -247,17 +238,11 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 ) : (
                   <div className="nearby-list">
                     {attraction.nearbyAttractions.map((nearby) => (
-                      <Link
-                        key={nearby.id}
-                        href={`/attractions/${nearby.slug}`}
-                        className="nearby-item"
-                      >
+                      <Link key={nearby.id} href={`/attractions/${nearby.slug}`} className="nearby-item">
                         <div className="nearby-img">
-                          {nearby.photos[0] ? (
-                            <img src={nearby.photos[0].imageUrl} alt={nearby.name} />
-                          ) : (
-                            <div className="nearby-img-placeholder" />
-                          )}
+                          {nearby.photos[0]
+                            ? <img src={nearby.photos[0].imageUrl} alt={nearby.name} />
+                            : <div className="nearby-img-placeholder" />}
                         </div>
                         <div className="nearby-info">
                           <span className="nearby-name">{nearby.name}</span>
@@ -275,9 +260,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
                 <p className="widget-desc">Explore things to do in {attraction.city}</p>
                 <a
                   href={`https://www.getyourguide.com/s?partner_id=ZBPYYHU&q=${cityEncoded}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="widget-btn widget-btn-orange"
+                  target="_blank" rel="noopener noreferrer" className="widget-btn widget-btn-orange"
                 >
                   Browse Tours
                 </a>
@@ -287,7 +270,34 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
         </div>
       </main>
 
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <div className="lightbox-overlay" onClick={closeLightbox}>
+          <button className="lightbox-close" onClick={closeLightbox} aria-label="Close">✕</button>
+
+          {lightboxIndex > 0 && (
+            <button className="lightbox-nav lightbox-prev" onClick={(e) => { e.stopPropagation(); prevPhoto(); }} aria-label="Previous">‹</button>
+          )}
+
+          <div className="lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
+            <img src={photos[lightboxIndex].imageUrl} alt={photos[lightboxIndex].altText} className="lightbox-img" />
+            {photos[lightboxIndex].altText && (
+              <p className="lightbox-caption">{photos[lightboxIndex].altText}</p>
+            )}
+          </div>
+
+          {lightboxIndex < photos.length - 1 && (
+            <button className="lightbox-nav lightbox-next" onClick={(e) => { e.stopPropagation(); nextPhoto(); }} aria-label="Next">›</button>
+          )}
+
+          <div className="lightbox-counter">{lightboxIndex + 1} / {photos.length}</div>
+        </div>
+      )}
+
       <style jsx global>{`
+        * { box-sizing: border-box; }
+        body { overflow-x: hidden; }
+
         .hero-image { height: 320px; border-radius: 12px; overflow: hidden; }
         .hero-image img { width: 100%; height: 100%; object-fit: cover; }
         @media (max-width: 768px) { .hero-image { height: 200px; } }
@@ -298,20 +308,15 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
           .sidebar-left { order: 1; }
           .main-content { order: 2; }
           .sidebar-right { order: 3; }
+          .sidebar-left, .sidebar-right { position: sticky; top: 24px; align-self: start; }
         }
         @media (max-width: 1023px) {
           .sidebar-left { order: 2; }
           .main-content { order: 1; }
           .sidebar-right { order: 3; }
         }
-        @media (min-width: 1024px) {
-          .sidebar-left, .sidebar-right { position: sticky; top: 24px; align-self: start; }
-        }
 
-        .widget-card {
-          background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 16px; margin-bottom: 16px; border: 1px solid #f0f0f0;
-        }
+        .widget-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 16px; border: 1px solid #f0f0f0; }
         .widget-icon { font-size: 24px; margin-bottom: 8px; }
         .widget-title { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
         .widget-title-sm { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
@@ -329,21 +334,59 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
         .nearby-img { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eee; }
         .nearby-img img { width: 100%; height: 100%; object-fit: cover; }
         .nearby-img-placeholder { width: 100%; height: 100%; background: #ddd; }
-        .nearby-info { display: flex; flex-direction: column; }
-        .nearby-name { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
+        .nearby-info { display: flex; flex-direction: column; min-width: 0; }
+        .nearby-name { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .nearby-city { font-size: 11px; color: #999; }
 
-        .attraction-content h1 { font-size: 2rem; font-weight: 800; color: #1a1a2e; margin-bottom: 1rem; line-height: 1.2; }
-        .attraction-content h2 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; margin-top: 2rem; margin-bottom: 0.75rem; }
+        .photo-thumb { display: block; border-radius: 10px; overflow: hidden; cursor: pointer; padding: 0; border: none; background: none; transition: transform 0.15s, box-shadow 0.15s; }
+        .photo-thumb:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .photo-thumb img { display: block; width: 100%; height: 144px; object-fit: cover; }
+
+        .attraction-content { overflow-x: hidden; word-break: break-word; }
+        .attraction-content h1 { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: #1a1a2e; margin-bottom: 1rem; line-height: 1.2; }
+        .attraction-content h2 { font-size: clamp(1.1rem, 4vw, 1.5rem); font-weight: 700; color: #1a1a2e; margin-top: 2rem; margin-bottom: 0.75rem; }
         .attraction-content h3 { font-size: 1.2rem; font-weight: 600; color: #333; margin-top: 1.5rem; margin-bottom: 0.5rem; }
         .attraction-content p { color: #444; line-height: 1.8; margin-bottom: 1rem; }
         .attraction-content ul, .attraction-content ol { margin: 0.75rem 0; padding-left: 1.5rem; }
         .attraction-content li { color: #444; line-height: 1.7; margin-bottom: 0.4rem; }
         .attraction-content section { margin-bottom: 1.5rem; }
         .attraction-content a { color: #4a90d9; text-decoration: underline; }
+        .attraction-content img { max-width: 100%; height: auto; }
+        .attraction-content table { max-width: 100%; overflow-x: auto; display: block; }
+        .attraction-content pre, .attraction-content code { max-width: 100%; overflow-x: auto; }
         .attraction-content .faq-section { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
         .attraction-content .faq-item { border-bottom: 1px solid #e5e7eb; padding: 1rem 0; }
         .attraction-content .faq-item:last-child { border-bottom: none; }
+
+        /* Lightbox */
+        .lightbox-overlay {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .lightbox-img-wrap { max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; }
+        .lightbox-img { max-width: 90vw; max-height: 80vh; object-fit: contain; border-radius: 8px; }
+        .lightbox-caption { color: #ccc; font-size: 13px; margin-top: 10px; text-align: center; }
+        .lightbox-close {
+          position: fixed; top: 16px; right: 20px; background: none; border: none;
+          color: #fff; font-size: 28px; cursor: pointer; z-index: 1001; line-height: 1;
+          padding: 4px 8px; border-radius: 4px;
+        }
+        .lightbox-close:hover { background: rgba(255,255,255,0.1); }
+        .lightbox-nav {
+          position: fixed; top: 50%; transform: translateY(-50%);
+          background: rgba(255,255,255,0.15); border: none; color: #fff;
+          font-size: 48px; cursor: pointer; z-index: 1001; padding: 8px 16px;
+          border-radius: 4px; line-height: 1;
+        }
+        .lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+        .lightbox-prev { left: 12px; }
+        .lightbox-next { right: 12px; }
+        .lightbox-counter { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); color: #ccc; font-size: 13px; }
+        @media (max-width: 640px) {
+          .lightbox-nav { font-size: 32px; padding: 6px 12px; }
+          .lightbox-prev { left: 4px; }
+          .lightbox-next { right: 4px; }
+        }
       `}</style>
     </>
   );
