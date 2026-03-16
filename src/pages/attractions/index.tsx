@@ -85,7 +85,7 @@ export default function AttractionsPage() {
   return (
     <>
       <Head>
-        <title>Travel Attractions | Travellyhub</title>
+        <title>Travel Attractions | TravellyHub</title>
         <meta
           name="description"
           content="Discover amazing travel attractions around the world. Detailed guides with history, tips, and things to do."

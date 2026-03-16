@@ -25,7 +25,7 @@ export function Navbar() {
               <Plane size={18} className="text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">
-              Travelly<span className="text-orange-500">hub</span>
+              Travelly<span className="text-orange-500">Hub</span>
             </span>
           </Link>
 

@@ -173,7 +173,7 @@ export default function Home() {
       {/* Features */}
       <section className="py-20 max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Why Travellyhub?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Why TravellyHub?</h2>
           <p className="text-gray-500 text-lg">Everything you need to find the perfect flight</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

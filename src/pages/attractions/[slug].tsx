@@ -130,7 +130,7 @@ export default function AttractionDetailPage({ attraction }: { attraction: Attra
   return (
     <>
       <Head>
-        <title>{attraction.seoTitle || attraction.name} | Travellyhub</title>
+        <title>{attraction.seoTitle || attraction.name} | TravellyHub</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {attraction.metaDescription && <meta name="description" content={attraction.metaDescription} />}
         <meta property="og:title" content={attraction.seoTitle || attraction.name} />

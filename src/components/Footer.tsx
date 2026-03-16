@@ -13,7 +13,7 @@ export function Footer() {
                 <Plane size={18} className="text-white" />
               </div>
               <span className="text-xl font-bold text-white">
-                Travelly<span className="text-orange-400">hub</span>
+                Travelly<span className="text-orange-400">Hub</span>
               </span>
             </Link>
             <p className="text-sm leading-relaxed max-w-xs">
@@ -48,7 +48,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">
-          <span>© {new Date().getFullYear()} Travellyhub. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} TravellyHub. All rights reserved.</span>
           <span>travellyhub.com</span>
         </div>
       </div>
