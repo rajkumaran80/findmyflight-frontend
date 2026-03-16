@@ -10,6 +10,7 @@ interface FlightResultsProps {
   isLoading: boolean;
   error: string | null;
   onBook: (flight: NormalizedFlight) => void;
+  passengers?: number;
 }
 
 export const FlightResults: React.FC<FlightResultsProps> = ({
@@ -17,6 +18,7 @@ export const FlightResults: React.FC<FlightResultsProps> = ({
   isLoading,
   error,
   onBook,
+  passengers = 1,
 }) => {
   if (isLoading) {
     return (
@@ -148,7 +150,7 @@ export const FlightResults: React.FC<FlightResultsProps> = ({
         </h2>
         <div>
           {results.flights.map((flight, idx) => (
-            <FlightCard key={`${flight.id}_${idx}`} flight={flight} onBook={onBook} />
+            <FlightCard key={`${flight.id}_${idx}`} flight={flight} onBook={onBook} passengers={passengers} />
           ))}
         </div>
       </div>

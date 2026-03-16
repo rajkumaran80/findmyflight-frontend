@@ -15,6 +15,7 @@ interface FlightDetailModalProps {
   flight: NormalizedFlight;
   onClose: () => void;
   onBook: (flight: NormalizedFlight) => void;
+  passengers?: number;
 }
 
 function SegmentView({ segment }: { segment: FlightSegmentDetail }) {
@@ -133,10 +134,55 @@ function ItineraryView({ itinerary }: { itinerary: FlightItinerary }) {
   );
 }
 
+function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
+  const from = flight.departureAirport;
+  const to = flight.arrivalAirport;
+  const pax = passengers || 1;
+
+  // Parse departure date
+  const depDate = new Date(flight.departureTime);
+  const yyyy = depDate.getFullYear();
+  const mm = String(depDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(depDate.getDate()).padStart(2, '0');
+  const yyyymmdd = `${yyyy}-${mm}-${dd}`;
+  const ddmm = `${dd}${mm}`; // for Aviasales
+
+  // Detect round-trip: 2 itineraries
+  const itins = flight.itineraries || [];
+  const isRT = itins.length > 1;
+  const returnSeg = isRT ? itins[1].segments[0] : null;
+  const retDate = returnSeg ? new Date(returnSeg.departureTime) : null;
+  const retYyyymmdd = retDate
+    ? `${retDate.getFullYear()}-${String(retDate.getMonth() + 1).padStart(2, '0')}-${String(retDate.getDate()).padStart(2, '0')}`
+    : null;
+
+  // Trip.com
+  const tripParams = new URLSearchParams({
+    dcity: from,
+    acity: to,
+    ddate: yyyymmdd,
+    adult: String(pax),
+    flighttype: isRT ? 'RT' : 'OW',
+    Allianceid: '7957069',
+    SID: '299535566',
+    trip_sub1: '',
+    trip_sub3: 'D13993968',
+  });
+  if (retYyyymmdd) tripParams.set('rdate', retYyyymmdd);
+  const tripUrl = `https://www.trip.com/flights/search?${tripParams.toString()}`;
+
+  // Aviasales via tp.media
+  const aviasalesPath = `https://www.aviasales.com/search/${from}${ddmm}${to}${pax}`;
+  const aviasalesUrl = `https://tp.media/r?campaign_id=100&marker=705711&p=4114&trs=501502&u=${encodeURIComponent(aviasalesPath)}`;
+
+  return { tripUrl, aviasalesUrl };
+}
+
 export default function FlightDetailModal({
   flight,
   onClose,
   onBook,
+  passengers = 1,
 }: FlightDetailModalProps) {
   // Close on ESC
   useEffect(() => {
@@ -151,10 +197,7 @@ export default function FlightDetailModal({
     };
   }, [onClose]);
 
-  const handleBook = () => {
-    window.open(flight.bookingUrl, '_blank');
-    onBook(flight);
-  };
+  const { tripUrl, aviasalesUrl } = buildBookingLinks(flight, passengers);
 
   const price = formatPrice(flight.price, flight.currency);
   const itineraries = flight.itineraries || [];
@@ -230,13 +273,26 @@ export default function FlightDetailModal({
             <div className="text-sm text-gray-600">Total price for all travellers</div>
             <div className="text-2xl font-bold text-gray-900">{price}</div>
           </div>
-          <button
-            onClick={handleBook}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-base"
-          >
-            Book Now
-            <ExternalLink size={18} />
-          </button>
+          <div className="flex gap-3">
+            <a
+              href={tripUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm"
+            >
+              Trip.com
+              <ExternalLink size={15} />
+            </a>
+            <a
+              href={aviasalesUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition text-sm"
+            >
+              Aviasales
+              <ExternalLink size={15} />
+            </a>
+          </div>
         </div>
       </div>
     </div>

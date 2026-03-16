@@ -14,6 +14,7 @@ import FlightDetailModal from './FlightDetailModal';
 interface FlightCardProps {
   flight: NormalizedFlight;
   onBook: (flight: NormalizedFlight) => void;
+  passengers?: number;
 }
 
 function ItinerarySummaryRow({
@@ -57,7 +58,7 @@ function ItinerarySummaryRow({
   );
 }
 
-export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook }) => {
+export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook, passengers = 1 }) => {
   const [showModal, setShowModal] = useState(false);
 
   const price = formatPrice(flight.price, flight.currency);
@@ -140,6 +141,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook }) => {
           flight={flight}
           onClose={() => setShowModal(false)}
           onBook={onBook}
+          passengers={passengers}
         />
       )}
     </>
