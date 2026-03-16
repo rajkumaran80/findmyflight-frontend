@@ -161,15 +161,19 @@ function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
     dcity: from,
     acity: to,
     ddate: yyyymmdd,
-    adult: String(pax),
-    flighttype: isRT ? 'RT' : 'OW',
+    quantity: String(pax),
+    triptype: isRT ? 'rt' : 'ow',
+    class: 'y',
+    searchboxarg: 't',
+    nonstoponly: 'off',
+    locale: 'en-XX',
     Allianceid: '7957069',
     SID: '299535566',
     trip_sub1: '',
     trip_sub3: 'D13993968',
   });
   if (retYyyymmdd) tripParams.set('rdate', retYyyymmdd);
-  const tripUrl = `https://www.trip.com/flights/search?${tripParams.toString()}`;
+  const tripUrl = `https://www.trip.com/flights/showfarefirst?${tripParams.toString()}`;
 
   // Aviasales via tp.media
   const aviasalesPath = `https://www.aviasales.com/search/${from}${ddmm}${to}${pax}`;
