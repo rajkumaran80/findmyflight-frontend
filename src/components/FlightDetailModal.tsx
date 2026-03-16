@@ -175,8 +175,14 @@ function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
   if (retYyyymmdd) tripParams.set('rdate', retYyyymmdd);
   const tripUrl = `https://www.trip.com/flights/showfarefirst?${tripParams.toString()}`;
 
-  // Aviasales via tp.media
-  const aviasalesPath = `https://www.aviasales.com/search/${from}${ddmm}${to}${pax}`;
+  // Aviasales via tp.media — format: FROM+DDMM+TO[+DDMM_RETURN]+PAX?marker=
+  const retDdmm = retDate
+    ? `${String(retDate.getDate()).padStart(2, '0')}${String(retDate.getMonth() + 1).padStart(2, '0')}`
+    : '';
+  const aviasalesSearch = isRT && retDdmm
+    ? `${from}${ddmm}${to}${retDdmm}${pax}`
+    : `${from}${ddmm}${to}${pax}`;
+  const aviasalesPath = `https://www.aviasales.com/search/${aviasalesSearch}?marker=705711`;
   const aviasalesUrl = `https://tp.media/r?campaign_id=100&marker=705711&p=4114&trs=501502&u=${encodeURIComponent(aviasalesPath)}`;
 
   return { tripUrl, aviasalesUrl };
