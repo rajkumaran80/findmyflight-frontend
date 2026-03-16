@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { NormalizedFlight } from '@/lib/api';
 import {
   formatTime,
-  formatPrice,
   formatDuration,
   getStopsText,
 } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { Plane, Eye } from 'lucide-react';
 import FlightDetailModal from './FlightDetailModal';
 
@@ -60,8 +60,9 @@ function ItinerarySummaryRow({
 
 export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook, passengers = 1 }) => {
   const [showModal, setShowModal] = useState(false);
+  const { formatConverted } = useCurrency();
 
-  const price = formatPrice(flight.price, flight.currency);
+  const price = formatConverted(flight.price, flight.currency);
   const outbound = flight.itineraries?.find((i) => i.direction === 'outbound');
   const inbound = flight.itineraries?.find((i) => i.direction === 'inbound');
 

@@ -5,10 +5,10 @@ import { NormalizedFlight, FlightItinerary, FlightSegmentDetail } from '@/lib/ap
 import {
   formatDateTime,
   formatDuration,
-  formatPrice,
   getStopsText,
   getLayoverMinutes,
 } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { X, Plane, Clock, ExternalLink } from 'lucide-react';
 
 interface FlightDetailModalProps {
@@ -201,9 +201,10 @@ export default function FlightDetailModal({
     };
   }, [onClose]);
 
+  const { formatConverted } = useCurrency();
   const { tripUrl, aviasalesUrl } = buildBookingLinks(flight, passengers);
 
-  const price = formatPrice(flight.price, flight.currency);
+  const price = formatConverted(flight.price, flight.currency);
   const itineraries = flight.itineraries || [];
 
   // Fallback: build a simple itinerary from flat fields if no itineraries
