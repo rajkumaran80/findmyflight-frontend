@@ -11,10 +11,13 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { Plane, Eye } from 'lucide-react';
 import FlightDetailModal from './FlightDetailModal';
 
+interface PassengerBreakdown { adults: number; children: number; infants: number; }
+
 interface FlightCardProps {
   flight: NormalizedFlight;
   onBook: (flight: NormalizedFlight) => void;
   passengers?: number;
+  passengerBreakdown?: PassengerBreakdown;
 }
 
 function ItinerarySummaryRow({
@@ -58,7 +61,7 @@ function ItinerarySummaryRow({
   );
 }
 
-export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook, passengers = 1 }) => {
+export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook, passengers = 1, passengerBreakdown }) => {
   const [showModal, setShowModal] = useState(false);
   const { formatConverted } = useCurrency();
 
@@ -143,6 +146,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({ flight, onBook, passenge
           onClose={() => setShowModal(false)}
           onBook={onBook}
           passengers={passengers}
+          passengerBreakdown={passengerBreakdown}
         />
       )}
     </>

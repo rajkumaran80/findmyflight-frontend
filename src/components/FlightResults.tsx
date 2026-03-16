@@ -5,12 +5,15 @@ import { NormalizedFlight, FlightSearchResult } from '@/lib/api';
 import { FlightCard } from './FlightCard';
 import { Loader } from 'lucide-react';
 
+interface PassengerBreakdown { adults: number; children: number; infants: number; }
+
 interface FlightResultsProps {
   results: FlightSearchResult | null;
   isLoading: boolean;
   error: string | null;
   onBook: (flight: NormalizedFlight) => void;
   passengers?: number;
+  passengerBreakdown?: PassengerBreakdown;
 }
 
 export const FlightResults: React.FC<FlightResultsProps> = ({
@@ -19,6 +22,7 @@ export const FlightResults: React.FC<FlightResultsProps> = ({
   error,
   onBook,
   passengers = 1,
+  passengerBreakdown,
 }) => {
   if (isLoading) {
     return (
@@ -150,7 +154,7 @@ export const FlightResults: React.FC<FlightResultsProps> = ({
         </h2>
         <div>
           {results.flights.map((flight, idx) => (
-            <FlightCard key={`${flight.id}_${idx}`} flight={flight} onBook={onBook} passengers={passengers} />
+            <FlightCard key={`${flight.id}_${idx}`} flight={flight} onBook={onBook} passengers={passengers} passengerBreakdown={passengerBreakdown} />
           ))}
         </div>
       </div>

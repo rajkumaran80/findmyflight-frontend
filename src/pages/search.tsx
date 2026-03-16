@@ -32,6 +32,7 @@ export default function SearchPage() {
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
   const [passengers, setPassengers] = useState(1);
+  const [passengerBreakdown, setPassengerBreakdown] = useState<{ adults: number; children: number; infants: number }>({ adults: 1, children: 0, infants: 0 });
 
   // Handle search
   const handleSearch = async (searchParams: any) => {
@@ -59,6 +60,7 @@ export default function SearchPage() {
         ? breakdown.adults + breakdown.children + breakdown.infants
         : searchParams.passengers || 1;
       setPassengers(totalPassengers);
+      setPassengerBreakdown(breakdown ?? { adults: totalPassengers, children: 0, infants: 0 });
 
       const request: any = {
         from: searchParams.from,
@@ -322,6 +324,7 @@ export default function SearchPage() {
                 error={error}
                 onBook={handleBook}
                 passengers={passengers}
+                passengerBreakdown={passengerBreakdown}
               />
             </div>
           </div>

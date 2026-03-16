@@ -11,11 +11,14 @@ import {
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { X, Plane, Clock, ExternalLink } from 'lucide-react';
 
+interface PassengerBreakdown { adults: number; children: number; infants: number; }
+
 interface FlightDetailModalProps {
   flight: NormalizedFlight;
   onClose: () => void;
   onBook: (flight: NormalizedFlight) => void;
   passengers?: number;
+  passengerBreakdown?: PassengerBreakdown;
 }
 
 function SegmentView({ segment }: { segment: FlightSegmentDetail }) {
@@ -134,10 +137,13 @@ function ItineraryView({ itinerary }: { itinerary: FlightItinerary }) {
   );
 }
 
-function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
+function buildBookingLinks(flight: NormalizedFlight, passengers: number, breakdown?: PassengerBreakdown) {
   const from = flight.departureAirport;
   const to = flight.arrivalAirport;
   const pax = passengers || 1;
+  const adults = breakdown?.adults ?? pax;
+  const children = breakdown?.children ?? 0;
+  const infants = breakdown?.infants ?? 0;
 
   // Parse departure date
   const depDate = new Date(flight.departureTime);
@@ -161,7 +167,7 @@ function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
     dcity: from,
     acity: to,
     ddate: yyyymmdd,
-    quantity: String(pax),
+    quantity: String(adults),
     triptype: isRT ? 'rt' : 'ow',
     class: 'y',
     searchboxarg: 't',
@@ -172,6 +178,8 @@ function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
     trip_sub1: '',
     trip_sub3: 'D13993968',
   });
+  if (children > 0) tripParams.set('childqty', String(children));
+  if (infants > 0) tripParams.set('babyqty', String(infants));
   if (retYyyymmdd) tripParams.set('rdate', retYyyymmdd);
   const tripUrl = `https://www.trip.com/flights/showfarefirst?${tripParams.toString()}`;
 
@@ -180,8 +188,8 @@ function buildBookingLinks(flight: NormalizedFlight, passengers: number) {
     ? `${String(retDate.getDate()).padStart(2, '0')}${String(retDate.getMonth() + 1).padStart(2, '0')}`
     : '';
   const aviasalesSearch = isRT && retDdmm
-    ? `${from}${ddmm}${to}${retDdmm}${pax}`
-    : `${from}${ddmm}${to}${pax}`;
+    ? `${from}${ddmm}${to}${retDdmm}${adults}${children}${infants}`
+    : `${from}${ddmm}${to}${adults}${children}${infants}`;
   const aviasalesPath = `https://www.aviasales.com/search/${aviasalesSearch}?marker=705711`;
   const aviasalesUrl = `https://tp.media/r?campaign_id=100&marker=705711&p=4114&trs=501502&u=${encodeURIComponent(aviasalesPath)}`;
 
@@ -193,6 +201,7 @@ export default function FlightDetailModal({
   onClose,
   onBook,
   passengers = 1,
+  passengerBreakdown,
 }: FlightDetailModalProps) {
   // Close on ESC
   useEffect(() => {
@@ -208,7 +217,7 @@ export default function FlightDetailModal({
   }, [onClose]);
 
   const { formatConverted } = useCurrency();
-  const { tripUrl, aviasalesUrl } = buildBookingLinks(flight, passengers);
+  const { tripUrl, aviasalesUrl } = buildBookingLinks(flight, passengers, passengerBreakdown);
 
   const price = formatConverted(flight.price, flight.currency);
   const itineraries = flight.itineraries || [];
