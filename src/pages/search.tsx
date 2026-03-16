@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { SearchForm } from '@/components/SearchForm';
 import { FlightResults } from '@/components/FlightResults';
 import { FilterSidebar } from '@/components/FilterSidebar';
-import { CurrencySelector } from '@/components/CurrencySelector';
+import { Navbar } from '@/components/Navbar';
 import { apiClient, FlightSearchResult, NormalizedFlight } from '@/lib/api';
 
 export interface FilterMeta {
@@ -263,19 +263,13 @@ export default function SearchPage() {
   }, [results]);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Find My Flight</h1>
-            <p className="text-gray-600">
-              Compare and book flights from multiple airlines
-            </p>
-          </div>
-          <div className="mt-2 shrink-0">
-            <CurrencySelector />
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">Search Flights</h1>
+          <p className="text-gray-500 text-sm">Compare and book flights from multiple airlines</p>
         </div>
 
         {/* Search Form */}
@@ -339,6 +333,6 @@ export default function SearchPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
